@@ -12,8 +12,9 @@
             padding: 5px;
         }
 
-        input[type="number"] {
-            width: 60px;
+        input[type="number"],
+        input[type="text"] {
+            width: 80px;
         }
 
         button {
@@ -26,7 +27,6 @@
             const row = table.insertRow(-1);
             const cells = table.rows[1].cells.length;
 
-            // Кнопка удаления критерия
             let nameCell = row.insertCell(0);
             nameCell.innerHTML = '<input name="criterion_name" required>';
 
@@ -37,7 +37,6 @@
                 row.insertCell(i).innerHTML = `<input name="score_${row.rowIndex - 2}_${i - 2}" type="number" required>`;
             }
 
-            // Кнопка удаления критерия
             let removeCell = row.insertCell(-1);
             removeCell.innerHTML = `<button type="button" onclick="removeRow(this)">🗑️</button>`;
         }
@@ -49,12 +48,10 @@
             const name = prompt("Name der neuen Option:");
             if (!name) return;
 
-            // Добавить заголовок новой опции
             let th = document.createElement("th");
             th.innerHTML = `<input name="option_name" value="${name}" required><br><button type="button" onclick="removeColumn(this)">🗑️</button>`;
-            headerRow.insertBefore(th, headerRow.lastElementChild); // перед последней (пустой) ячейкой
+            headerRow.insertBefore(th, headerRow.lastElementChild);
 
-            // Добавить ячейки ввода для каждой строки критериев
             for (let r = 1; r < table.rows.length; r++) {
                 const input = document.createElement("input");
                 input.name = `score_${r - 1}_${newIndex}`;
@@ -63,7 +60,7 @@
 
                 const td = document.createElement("td");
                 td.appendChild(input);
-                table.rows[r].insertBefore(td, table.rows[r].lastElementChild); // перед кнопкой удаления
+                table.rows[r].insertBefore(td, table.rows[r].lastElementChild);
             }
         }
 
@@ -85,41 +82,44 @@
 
 <body>
     <h1>Nutzwertanalyse</h1>
+
+    {% if error %}
+    <p style="color: red;">⚠️ {{ error }}</p>
+    {% endif %}
+
     <form method="post">
         <table id="nwa-table">
             <thead>
                 <tr>
                     <th>Kriterium</th>
                     <th>Gewicht (%)</th>
-                    <th><input name="option_name" value="Option A" required><br><button type="button"
-                            onclick="removeColumn(this)">🗑️</button></th>
-                    <th><input name="option_name" value="Option B" required><br><button type="button"
-                            onclick="removeColumn(this)">🗑️</button></th>
+                    {% set option_names = data.getlist("option_name") if data else ["Option A", "Option B"] %}
+                    {% for name in option_names %}
+                    <th>
+                        <input name="option_name" value="{{ name }}" required>
+                        <br><button type="button" onclick="removeColumn(this)">🗑️</button>
+                    </th>
+                    {% endfor %}
                     <th></th>
                 </tr>
             </thead>
             <tbody>
+                {% set criteria = data.getlist("criterion_name") if data else ["Kosten", "Qualität", "Lieferzeit"] %}
+                {% set weights = data.getlist("weight") if data else ["3", "5", "2"] %}
+                {% for i in range(criteria | length) %}
                 <tr>
-                    <td><input name="criterion_name" value="Kosten" required></td>
-                    <td><input name="weight" value="3" type="number" required></td>
-                    <td><input name="score_0_0" value="7" type="number" required></td>
-                    <td><input name="score_0_1" value="8" type="number" required></td>
+                    <td><input name="criterion_name" value="{{ criteria[i] }}" required></td>
+                    <td><input name="weight" type="number" value="{{ weights[i] }}" required></td>
+                    {% for j in range(option_names | length) %}
+                    {% set field_name = "score_" ~ i ~ "_" ~ j %}
+                    <td>
+                        <input name="score_{{i}}_{{j}}" type="number"
+                            value="{{ data.get(field_name, '') if data else '' }}" required>
+                    </td>
+                    {% endfor %}
                     <td><button type="button" onclick="removeRow(this)">🗑️</button></td>
                 </tr>
-                <tr>
-                    <td><input name="criterion_name" value="Qualität" required></td>
-                    <td><input name="weight" value="5" type="number" required></td>
-                    <td><input name="score_1_0" value="8" type="number" required></td>
-                    <td><input name="score_1_1" value="6" type="number" required></td>
-                    <td><button type="button" onclick="removeRow(this)">🗑️</button></td>
-                </tr>
-                <tr>
-                    <td><input name="criterion_name" value="Lieferzeit" required></td>
-                    <td><input name="weight" value="2" type="number" required></td>
-                    <td><input name="score_2_0" value="6" type="number" required></td>
-                    <td><input name="score_2_1" value="9" type="number" required></td>
-                    <td><button type="button" onclick="removeRow(this)">🗑️</button></td>
-                </tr>
+                {% endfor %}
             </tbody>
         </table>
         <br>
@@ -133,7 +133,7 @@
     <h2>Ergebnisse</h2>
     <ul>
         {% for res in results %}
-        <li>{{ res.name }}: {{ '%.2f' | format(res.score) }}</li>
+        <li><strong>{{ res.name }}</strong>: {{ '%.2f' | format(res.score) }}</li>
         {% endfor %}
     </ul>
     {% endif %}
