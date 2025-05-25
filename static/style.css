@@ -40,13 +40,37 @@ td {
     text-align: center;
 }
 
-input[type="text"],
-input[type="number"] {
-    width: 70px;
+input[type="text"] {
+    width: 20px;
     padding: 5px;
     border: 1px solid #bbb;
-    border-radius: 4px;
+    border-radius: 6px;
     text-align: center;
+}
+
+input[type="number"] {
+    width: 40px;
+    padding: 5px;
+    border: 1px solid #bbb;
+    border-radius: 6px;
+    text-align: center;
+}
+
+input[name="option_name"] {
+    padding: 5px 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 140px;
+    box-sizing: border-box;
+    margin-right: 6px;
+    vertical-align: middle;
+    transition: border-color 0.3s ease;
+}
+
+input[name="option_name"]:focus {
+    border-color: #4CAF50;
+    outline: none;
 }
 
 button {
@@ -84,8 +108,9 @@ button[type="submit"]:hover {
 }
 
 canvas {
-    max-width: 400px;
-    max-height: 400px;
+    width: 700px;
+    height: 700px;
+    margin: 0 auto;
 }
 
 ul {

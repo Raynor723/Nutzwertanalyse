@@ -20,7 +20,8 @@ def index():
 
         weight_sum = sum(weights)
         if abs(weight_sum - 100) > 0.01:
-            return render_template("index.html", error="Сумма всех весов должна быть ровно 100", data=request.form)
+            error = f"Сумма весов должна быть равна 100, сейчас: {round(weight_sum, 2)}"
+            return render_template("index.html", error=error, data=request.form)
 
         normalized_weights = [w / 100 for w in weights]
 
