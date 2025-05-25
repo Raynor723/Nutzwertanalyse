@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Nutzwertanalyse</title>
+    <style>
+        table,
+        th,
+        td {
+            border: 1px solid black;
+            border-collapse: collapse;
+            padding: 5px;
+        }
+
+        input[type="number"] {
+            width: 60px;
+        }
+
+        button {
+            margin: 5px;
+        }
+    </style>
+    <script>
+        function addCriterion() {
+            const table = document.getElementById('nwa-table');
+            const row = table.insertRow(-1);
+            const cells = table.rows[1].cells.length;
+
+            // Кнопка удаления критерия
+            let nameCell = row.insertCell(0);
+            nameCell.innerHTML = '<input name="criterion_name" required>';
+
+            let weightCell = row.insertCell(1);
+            weightCell.innerHTML = '<input name="weight" type="number" required>';
+
+            for (let i = 2; i < cells - 1; i++) {
+                row.insertCell(i).innerHTML = `<input name="score_${row.rowIndex - 2}_${i - 2}" type="number" required>`;
+            }
+
+            // Кнопка удаления критерия
+            let removeCell = row.insertCell(-1);
+            removeCell.innerHTML = `<button type="button" onclick="removeRow(this)">🗑️</button>`;
+        }
+
+        function addOption() {
+            const table = document.getElementById('nwa-table');
+            const headerRow = table.rows[0];
+            const newIndex = headerRow.cells.length - 2;
+            const name = prompt("Name der neuen Option:");
+            if (!name) return;
+
+            // Добавить заголовок новой опции
+            let th = document.createElement("th");
+            th.innerHTML = `<input name="option_name" value="${name}" required><br><button type="button" onclick="removeColumn(this)">🗑️</button>`;
+            headerRow.insertBefore(th, headerRow.lastElementChild); // перед последней (пустой) ячейкой
+
+            // Добавить ячейки ввода для каждой строки критериев
+            for (let r = 1; r < table.rows.length; r++) {
+                const input = document.createElement("input");
+                input.name = `score_${r - 1}_${newIndex}`;
+                input.type = "number";
+                input.required = true;
+
+                const td = document.createElement("td");
+                td.appendChild(input);
+                table.rows[r].insertBefore(td, table.rows[r].lastElementChild); // перед кнопкой удаления
+            }
+        }
+
+        function removeRow(btn) {
+            const row = btn.parentNode.parentNode;
+            row.parentNode.removeChild(row);
+        }
+
+        function removeColumn(btn) {
+            const cellIndex = btn.parentNode.cellIndex;
+            const table = document.getElementById("nwa-table");
+
+            for (let i = 0; i < table.rows.length; i++) {
+                table.rows[i].deleteCell(cellIndex);
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <h1>Nutzwertanalyse</h1>
+    <form method="post">
+        <table id="nwa-table">
+            <thead>
+                <tr>
+                    <th>Kriterium</th>
+                    <th>Gewicht (%)</th>
+                    <th><input name="option_name" value="Option A" required><br><button type="button"
+                            onclick="removeColumn(this)">🗑️</button></th>
+                    <th><input name="option_name" value="Option B" required><br><button type="button"
+                            onclick="removeColumn(this)">🗑️</button></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><input name="criterion_name" value="Kosten" required></td>
+                    <td><input name="weight" value="3" type="number" required></td>
+                    <td><input name="score_0_0" value="7" type="number" required></td>
+                    <td><input name="score_0_1" value="8" type="number" required></td>
+                    <td><button type="button" onclick="removeRow(this)">🗑️</button></td>
+                </tr>
+                <tr>
+                    <td><input name="criterion_name" value="Qualität" required></td>
+                    <td><input name="weight" value="5" type="number" required></td>
+                    <td><input name="score_1_0" value="8" type="number" required></td>
+                    <td><input name="score_1_1" value="6" type="number" required></td>
+                    <td><button type="button" onclick="removeRow(this)">🗑️</button></td>
+                </tr>
+                <tr>
+                    <td><input name="criterion_name" value="Lieferzeit" required></td>
+                    <td><input name="weight" value="2" type="number" required></td>
+                    <td><input name="score_2_0" value="6" type="number" required></td>
+                    <td><input name="score_2_1" value="9" type="number" required></td>
+                    <td><button type="button" onclick="removeRow(this)">🗑️</button></td>
+                </tr>
+            </tbody>
+        </table>
+        <br>
+        <button type="button" onclick="addCriterion()">Kriterium hinzufügen</button>
+        <button type="button" onclick="addOption()">Option hinzufügen</button>
+        <br><br>
+        <input type="submit" value="Berechnen">
+    </form>
+
+    {% if results %}
+    <h2>Ergebnisse</h2>
+    <ul>
+        {% for res in results %}
+        <li>{{ res.name }}: {{ '%.2f' | format(res.score) }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</body>
+
+</html>
