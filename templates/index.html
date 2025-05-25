@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="de">
 
 <head>
     <meta charset="UTF-8">
@@ -61,6 +61,11 @@
             {% endfor %}
         </ul>
 
+        <h2>Столбчатая диаграмма</h2>
+        <div class="canvas-container">
+            <canvas id="barChart" width="500" height="300"></canvas>
+        </div>
+
         <h2>Общий радарный график</h2>
         <canvas id="radarChartAll"></canvas>
 
@@ -110,6 +115,26 @@
                         }
                     }
                 });
+            });
+        </script>
+        {% endif %}
+
+        {% if bar_data %}
+        <script>
+            const barData = {{ bar_data | tojson }};
+            const barCtx = document.getElementById("barChart").getContext("2d");
+
+            new Chart(barCtx, {
+                type: 'bar',
+                data: barData,
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 10
+                        }
+                    }
+                }
             });
         </script>
         {% endif %}

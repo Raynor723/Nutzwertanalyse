@@ -57,8 +57,30 @@ def index():
                 "label": option,
                 "data": values
             })
+        colors = [
+            "rgba(255, 99, 132, 0.6)",
+            "rgba(54, 162, 235, 0.6)",
+            "rgba(255, 206, 86, 0.6)",
+            "rgba(75, 192, 192, 0.6)",
+            "rgba(153, 102, 255, 0.6)",
+            "rgba(255, 159, 64, 0.6)"
+        ]
 
-        return render_template("index.html", results=results, data=request.form, chart_data=json.dumps(chart_data))
+        bar_data = {
+            "labels": ["Итоговая оценка"],  # единичная метка по оси X
+            "datasets": [
+                {
+                    "label": name,
+                    "data": [value],  # одно значение для этого dataset
+                    "backgroundColor": colors[i % len(colors)],
+                    "borderColor": colors[i % len(colors)].replace("0.6", "1"),
+                    "borderWidth": 1
+                }
+                for i, (name, value) in enumerate(results)
+            ]
+        }
+
+        return render_template("index.html", results=results, data=request.form, chart_data=json.dumps(chart_data), bar_data=bar_data)
 
     return render_template("index.html")
 
