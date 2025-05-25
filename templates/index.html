@@ -44,24 +44,23 @@
         function addOption() {
             const table = document.getElementById('nwa-table');
             const headerRow = table.rows[0];
+            const bodyRows = Array.from(table.rows).slice(1); // exclude header
+
             const newIndex = headerRow.cells.length - 2;
             const name = prompt("Name der neuen Option:");
             if (!name) return;
 
-            let th = document.createElement("th");
+            // Добавляем заголовок с кнопкой удаления
+            const th = document.createElement("th");
             th.innerHTML = `<input name="option_name" value="${name}" required><br><button type="button" onclick="removeColumn(this)">🗑️</button>`;
             headerRow.insertBefore(th, headerRow.lastElementChild);
 
-            for (let r = 1; r < table.rows.length; r++) {
-                const input = document.createElement("input");
-                input.name = `score_${r - 1}_${newIndex}`;
-                input.type = "number";
-                input.required = true;
-
+            // Добавляем ячейки с input в каждую строку
+            bodyRows.forEach((row, rowIndex) => {
                 const td = document.createElement("td");
-                td.appendChild(input);
-                table.rows[r].insertBefore(td, table.rows[r].lastElementChild);
-            }
+                td.innerHTML = `<input name="score_${rowIndex}_${newIndex}" type="number" max="10" required>`;
+                row.insertBefore(td, row.lastElementChild);
+            });
         }
 
         function removeRow(btn) {
@@ -113,7 +112,7 @@
                     {% for j in range(option_names | length) %}
                     {% set field_name = "score_" ~ i ~ "_" ~ j %}
                     <td>
-                        <input name="score_{{i}}_{{j}}" type="number"
+                        <input name="score_{{i}}_{{j}}" type="number" max="10"
                             value="{{ data.get(field_name, '') if data else '' }}" required>
                     </td>
                     {% endfor %}
