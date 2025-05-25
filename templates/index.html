@@ -1,8 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 
 <head>
+    <meta charset="UTF-8">
     <title>Nutzwertanalyse</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         table,
         th,
@@ -12,50 +14,165 @@
             padding: 5px;
         }
 
-        input[type="number"],
-        input[type="text"] {
-            width: 80px;
+        input[type="number"] {
+            width: 60px;
         }
 
-        button {
-            margin: 5px;
+        .error {
+            color: red;
         }
     </style>
+</head>
+
+<body>
+    <h1>Nutzwertanalyse</h1>
+    {% if error %}
+    <p class="error">{{ error }}</p>
+    {% endif %}
+
+    <form method="POST">
+        <table id="nwa-table">
+            <thead>
+                <tr>
+                    <th>Критерий</th>
+                    <th>Вес (%)</th>
+                    {% set option_names = data.getlist("option_name") if data else [""] %}
+                    {% for name in option_names %}
+                    <th>
+                        <input name="option_name" value="{{ name }}" required><br>
+                        <button type="button" onclick="removeColumn(this)">🗑️</button>
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% set criteria = data.getlist("criterion") if data else [""] %}
+                {% for i in range(criteria | length) %}
+                <tr>
+                    <td><input name="criterion" value="{{ criteria[i] }}" required></td>
+                    <td><input name="weight" type="number" value="{{ data.getlist('weight')[i] if data else '' }}"
+                            required></td>
+                    {% for j in range(option_names | length) %}
+                    {% set field_name = "score_" ~ i ~ "_" ~ j %}
+                    <td><input name="{{ field_name }}" type="number" max="10"
+                            value="{{ data.get(field_name, '') if data else '' }}" required></td>
+                    {% endfor %}
+                    <td><button type="button" onclick="removeRow(this)">🗑️</button></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="button" onclick="addRow()">+ Критерий</button>
+        <button type="button" onclick="addOption()">+ Опция</button>
+        <br><br>
+        <button type="submit">Рассчитать</button>
+    </form>
+
+    {% if results %}
+    <h2>Результаты</h2>
+    <ul>
+        {% for name, value in results %}
+        <li>{{ name }}: {{ value }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Общий радарный график</h2>
+    <canvas id="radarChartAll" width="400" height="400"></canvas>
+
+    <div id="individualCharts"></div>
+
     <script>
-        function addCriterion() {
+        const chartData = {{ chart_data | safe }};
+
+        new Chart(document.getElementById("radarChartAll"), {
+            type: "radar",
+            data: chartData,
+            options: {
+                scales: {
+                    r: {
+                        min: 0,
+                        max: 10,
+                        ticks: { stepSize: 1 }
+                    }
+                }
+            }
+        });
+
+        chartData.datasets.forEach((dataset, index) => {
+            const container = document.getElementById("individualCharts");
+
+            const title = document.createElement("h3");
+            title.innerText = "Опция: " + dataset.label;
+            container.appendChild(title);
+
+            const canvas = document.createElement("canvas");
+            canvas.id = "radar_" + index;
+            canvas.width = 400;
+            canvas.height = 400;
+            container.appendChild(canvas);
+
+            new Chart(canvas, {
+                type: "radar",
+                data: {
+                    labels: chartData.labels,
+                    datasets: [dataset]
+                },
+                options: {
+                    scales: {
+                        r: {
+                            min: 0,
+                            max: 10,
+                            ticks: { stepSize: 1 }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+    {% endif %}
+
+    <script>
+        function addRow() {
             const table = document.getElementById('nwa-table');
-            const row = table.insertRow(-1);
-            const cells = table.rows[1].cells.length;
+            const tbody = table.querySelector("tbody");
+            const rowIndex = tbody.rows.length; // индекс новой строки внутри tbody
+            const optionCount = table.rows[0].cells.length - 2;
 
-            let nameCell = row.insertCell(0);
-            nameCell.innerHTML = '<input name="criterion_name" required>';
+            const newRow = tbody.insertRow(-1); // добавляет в конец <tbody>
 
-            let weightCell = row.insertCell(1);
-            weightCell.innerHTML = '<input name="weight" type="number" required>';
+            // Критерий
+            const tdCriterion = newRow.insertCell();
+            tdCriterion.innerHTML = '<input name="criterion" required>';
 
-            for (let i = 2; i < cells - 1; i++) {
-                row.insertCell(i).innerHTML = `<input name="score_${row.rowIndex - 2}_${i - 2}" type="number" required>`;
+            // Вес
+            const tdWeight = newRow.insertCell();
+            tdWeight.innerHTML = '<input name="weight" type="number" required>';
+
+            // Оценки по каждой опции
+            for (let j = 0; j < optionCount; j++) {
+                const td = newRow.insertCell();
+                td.innerHTML = `<input name="score_${rowIndex}_${j}" type="number" max="10" required>`;
             }
 
-            let removeCell = row.insertCell(-1);
-            removeCell.innerHTML = `<button type="button" onclick="removeRow(this)">🗑️</button>`;
+            // Кнопка удаления строки
+            const tdDelete = newRow.insertCell();
+            tdDelete.innerHTML = '<button type="button" onclick="removeRow(this)">🗑️</button>';
         }
+
 
         function addOption() {
             const table = document.getElementById('nwa-table');
             const headerRow = table.rows[0];
-            const bodyRows = Array.from(table.rows).slice(1); // exclude header
-
+            const bodyRows = Array.from(table.rows).slice(1);
             const newIndex = headerRow.cells.length - 2;
-            const name = prompt("Name der neuen Option:");
+
+            const name = prompt("Название новой опции:");
             if (!name) return;
 
-            // Добавляем заголовок с кнопкой удаления
             const th = document.createElement("th");
             th.innerHTML = `<input name="option_name" value="${name}" required><br><button type="button" onclick="removeColumn(this)">🗑️</button>`;
             headerRow.insertBefore(th, headerRow.lastElementChild);
 
-            // Добавляем ячейки с input в каждую строку
             bodyRows.forEach((row, rowIndex) => {
                 const td = document.createElement("td");
                 td.innerHTML = `<input name="score_${rowIndex}_${newIndex}" type="number" max="10" required>`;
@@ -63,79 +180,21 @@
             });
         }
 
-        function removeRow(btn) {
-            const row = btn.parentNode.parentNode;
-            row.parentNode.removeChild(row);
+        function removeRow(button) {
+            const row = button.parentElement.parentElement;
+            row.remove();
         }
 
-        function removeColumn(btn) {
-            const cellIndex = btn.parentNode.cellIndex;
+        function removeColumn(button) {
+            const th = button.closest("th");
+            const index = th.cellIndex;
             const table = document.getElementById("nwa-table");
 
-            for (let i = 0; i < table.rows.length; i++) {
-                table.rows[i].deleteCell(cellIndex);
+            for (let row of table.rows) {
+                row.deleteCell(index);
             }
         }
     </script>
-</head>
-
-<body>
-    <h1>Nutzwertanalyse</h1>
-
-    {% if error %}
-    <p style="color: red;">⚠️ {{ error }}</p>
-    {% endif %}
-
-    <form method="post">
-        <table id="nwa-table">
-            <thead>
-                <tr>
-                    <th>Kriterium</th>
-                    <th>Gewicht (%)</th>
-                    {% set option_names = data.getlist("option_name") if data else ["Option A", "Option B"] %}
-                    {% for name in option_names %}
-                    <th>
-                        <input name="option_name" value="{{ name }}" required>
-                        <br><button type="button" onclick="removeColumn(this)">🗑️</button>
-                    </th>
-                    {% endfor %}
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% set criteria = data.getlist("criterion_name") if data else ["Kosten", "Qualität", "Lieferzeit"] %}
-                {% set weights = data.getlist("weight") if data else ["3", "5", "2"] %}
-                {% for i in range(criteria | length) %}
-                <tr>
-                    <td><input name="criterion_name" value="{{ criteria[i] }}" required></td>
-                    <td><input name="weight" type="number" value="{{ weights[i] }}" required></td>
-                    {% for j in range(option_names | length) %}
-                    {% set field_name = "score_" ~ i ~ "_" ~ j %}
-                    <td>
-                        <input name="score_{{i}}_{{j}}" type="number" max="10"
-                            value="{{ data.get(field_name, '') if data else '' }}" required>
-                    </td>
-                    {% endfor %}
-                    <td><button type="button" onclick="removeRow(this)">🗑️</button></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <br>
-        <button type="button" onclick="addCriterion()">Kriterium hinzufügen</button>
-        <button type="button" onclick="addOption()">Option hinzufügen</button>
-        <br><br>
-        <input type="submit" value="Berechnen">
-    </form>
-
-    {% if results %}
-    <h2>Ergebnisse</h2>
-    <ul>
-        {% for res in results %}
-        <li><strong>{{ res.name }}</strong>: {{ '%.2f' | format(res.score) }}</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
 </body>
 
 </html>
