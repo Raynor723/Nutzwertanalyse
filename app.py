@@ -84,6 +84,5 @@ def index():
 
     return render_template("index.html")
 
-# 🚀 Запуск сервера
 if __name__ == "__main__":
     app.run(debug=True)
