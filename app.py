@@ -16,11 +16,11 @@ def index():
         try:
             weights = [float(w) for w in weights_raw]
         except ValueError:
-            return render_template("index.html", error="Некорректный вес", data=request.form)
+            return render_template("index.html", error="Falsches Gewicht", data=request.form)
 
         weight_sum = sum(weights)
         if abs(weight_sum - 100) > 0.01:
-            error = f"Сумма весов должна быть равна 100, сейчас: {round(weight_sum, 2)}"
+            error = f"Die Summe der Gewichte sollte nun 100 ergeben.: {round(weight_sum, 2)}"
             return render_template("index.html", error=error, data=request.form)
 
         normalized_weights = [w / 100 for w in weights]
@@ -34,10 +34,10 @@ def index():
                 try:
                     score = float(val)
                     if score > 10:
-                        return render_template("index.html", error=f"Значение в ячейке {i+1}×{j+1} больше 10", data=request.form)
+                        return render_template("index.html", error=f"Wert in Zelle {i+1}×{j+1} mehr als 10", data=request.form)
                     row.append(score)
                 except ValueError:
-                    return render_template("index.html", error=f"Некорректное значение в ячейке {i+1}×{j+1}", data=request.form)
+                    return render_template("index.html", error=f"Falscher Wert in der Zelle {i+1}×{j+1}", data=request.form)
             scores.append(row)
 
         results = []
@@ -45,7 +45,7 @@ def index():
             total = sum(scores[i][j] * normalized_weights[i] for i in range(num_criteria))
             results.append((options[j], round(total, 4)))
 
-        # Подготовка данных для радарных графиков
+
         chart_data = {
             "labels": criteria,
             "datasets": []
@@ -67,11 +67,11 @@ def index():
         ]
 
         bar_data = {
-            "labels": ["Итоговая оценка"],  # единичная метка по оси X
+            "labels": ["Bewertung"],
             "datasets": [
                 {
                     "label": name,
-                    "data": [value],  # одно значение для этого dataset
+                    "data": [value],
                     "backgroundColor": colors[i % len(colors)],
                     "borderColor": colors[i % len(colors)].replace("0.6", "1"),
                     "borderWidth": 1

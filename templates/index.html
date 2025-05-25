@@ -19,8 +19,8 @@
             <table id="nwa-table">
                 <thead>
                     <tr>
-                        <th>Критерий</th>
-                        <th>Вес (%)</th>
+                        <th>Kriterium</th>
+                        <th>Gewicht (%)</th>
                         {% set option_names = data.getlist("option_name") if data else [""] %}
                         {% for name in option_names %}
                         <th>
@@ -47,26 +47,26 @@
                     {% endfor %}
                 </tbody>
             </table>
-            <button type="button" onclick="addRow()">+ Критерий</button>
-            <button type="button" onclick="addOption()">+ Опция</button>
+            <button type="button" onclick="addRow()">+ Kriterium</button>
+            <button type="button" onclick="addOption()">+ Option</button>
             <br><br>
-            <button type="submit">Рассчитать</button>
+            <button type="submit">Berechnen</button>
         </form>
 
         {% if results %}
-        <h2>Результаты</h2>
+        <h2>Ergebnisse</h2>
         <ul>
             {% for name, value in results %}
             <li>{{ name }}: {{ value }}</li>
             {% endfor %}
         </ul>
 
-        <h2>Столбчатая диаграмма</h2>
+        <h2>Säulendiagramm</h2>
         <div class="canvas-container">
             <canvas id="barChart" width="500" height="300"></canvas>
         </div>
 
-        <h2>Общий радарный график</h2>
+        <h2>Allgemeines Radardiagramm</h2>
         <canvas id="radarChartAll"></canvas>
 
         <div id="individualCharts"></div>
@@ -92,7 +92,7 @@
                 const container = document.getElementById("individualCharts");
 
                 const title = document.createElement("h3");
-                title.innerText = "Опция: " + dataset.label;
+                title.innerText = "Option: " + dataset.label;
                 container.appendChild(title);
 
                 const canvas = document.createElement("canvas");
@@ -143,20 +143,20 @@
             function addRow() {
                 const table = document.getElementById('nwa-table');
                 const tbody = table.querySelector("tbody");
-                const rowIndex = tbody.rows.length; // индекс новой строки внутри tbody
+                const rowIndex = tbody.rows.length;
                 const optionCount = table.rows[0].cells.length - 2;
 
-                const newRow = tbody.insertRow(-1); // добавляет в конец <tbody>
+                const newRow = tbody.insertRow(-1);
 
-                // Критерий
+
                 const tdCriterion = newRow.insertCell();
                 tdCriterion.innerHTML = '<input name="criterion" required>';
 
-                // Вес
+
                 const tdWeight = newRow.insertCell();
                 tdWeight.innerHTML = '<input name="weight" type="number" required>';
 
-                // Оценки по каждой опции
+
                 for (let j = 0; j < optionCount; j++) {
                     const td = newRow.insertCell();
                     td.innerHTML = `<input name="score_${rowIndex}_${j}" type="number" max="10" required>`;
@@ -174,7 +174,7 @@
                 const bodyRows = Array.from(table.rows).slice(1);
                 const newIndex = headerRow.cells.length - 2;
 
-                const name = prompt("Название новой опции:");
+                const name = prompt("Name der neuen Option:");
                 if (!name) return;
 
                 const th = document.createElement("th");
